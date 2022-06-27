@@ -82,8 +82,9 @@ namespace Projekt_2.Server.Controllers
         public async Task<ActionResult> AddCompany(CompanyPost company)
         {
             try { await _service.AddCompany(company); 
-            }catch(Exception) {
-                return BadRequest();
+            }catch(Exception) 
+            {
+                return Conflict();
             }
             return Ok();
 

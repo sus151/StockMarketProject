@@ -340,15 +340,6 @@ namespace Projekt_2.Services
 
         public async Task AddCompany(CompanyPost company)
         {
-            if(company.CompanyInfo.Name.Equals("No data")
-               && company.CompanyInfo.HomepageUrl.Equals("No data")
-               && company.CompanyInfo.Description.Equals("No data")
-               && company.CompanyInfo.PhoneNumber.Equals("No data")
-               && company.CompanyInfo.City.Equals("No data")
-               && company.CompanyInfo.IconUrl.Equals("No data"))
-            {
-                throw new Exception();
-            }
             var companyExists = await _context.Companies.Where(e => e.Ticker == company.CompanyInfo.Ticker).FirstOrDefaultAsync();
             if(companyExists == null)
             {
@@ -483,6 +474,10 @@ namespace Projekt_2.Services
                     companyExists.CompanyStocks = stocks;
                     companyExists.CompanySessions = sessionEnds;
                     companyExists.LastUpdateDate = DateTime.Now;
+                }
+                else
+                {
+                    throw new Exception();
                 }
             }
             await _context.SaveChangesAsync();

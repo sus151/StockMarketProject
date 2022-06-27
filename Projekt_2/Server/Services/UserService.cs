@@ -35,7 +35,7 @@ namespace Projekt_2.Server.Services
                 throw new Exception("Conflict");
             }
             var count = await _context.UserCompanies.Where(e => e.IdUser == id).ToListAsync();
-            if(count.Count > 15)
+            if(count.Count >= 15)
             {
                 throw new Exception("BadRequest");
             }
