@@ -28,7 +28,7 @@
     <label>Company symbol</label>
 <div class="div2">
     <div class="div5">
-<SfAutoComplete TValue="string" TItem="CompanyMainInfo" Placeholder="Select a Company" DataSource="@Companies" Width="800px" @bind-Value="@Company" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains" SuggestionCount=3 PopupWidth="920" Highlight="true" CssClass="e-custom">
+<SfAutoComplete TValue="string" TItem="CompanyMainInfo" Placeholder="Select a Company"   DataSource="@Companies" Width="800px" @bind-Value="@Company" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains" SuggestionCount=3 PopupWidth="920" Highlight="true" CssClass="e-custom" ShowClearButton="false" >
     <AutoCompleteTemplates TItem="CompanyMainInfo">
         <ItemTemplate Context="another_name">
             <span><span class='ticker'>@((another_name as CompanyMainInfo).Ticker)</span><span class='name'>@((another_name as CompanyMainInfo).Name)</span></span>
@@ -112,26 +112,30 @@
                         </ChartSeriesCollection>
                     </SfChart>
                    </div>
-                   
-                     
-<table>
-<tr><td><h2>From: @CompanySessionEnd.From</h2></td><td><h2 class="header-space">Close: @CompanySessionEnd.Close</h2></td></tr>
-<tr><td><h2>Symbol: @CompanySessionEnd.Symbol</h2></td><td><h2 class="header-space">Volume: @CompanySessionEnd.Volume</h2></td></tr>
-<tr><td><h2>Open: @CompanySessionEnd.Open</h2></td><td><h2 class="header-space">After hours: @CompanySessionEnd.AfterHours</h2></td></tr>
-<tr><td><h2>High: @CompanySessionEnd.High</h2></td><td><h2 class="header-space">Pre market: @CompanySessionEnd.PreMarket</h2></td></tr>
-<tr><td><h2>Low: @CompanySessionEnd.Low</h2></td></tr>
- </table>
-
-<h1 class="h3">Last 5 articles</h1>
-<table class="table">
-   @foreach(var artcile in CompanyArticles){
-       <tr><td class="tda">@artcile.Title<br><a href="@artcile.Article_url">View article</a></td>
-       <td class="tda">@artcile.Published_utc</td></tr>    
-}
-</table>
 
 
-            
+                @if (@CompanySessionEnd != null && @CompanyArticles!=null)
+                {
+                    <table>
+                        <tr><td><h2>From: @CompanySessionEnd.From</h2></td><td><h2 class="header-space">Close: @CompanySessionEnd.Close</h2></td></tr>
+                        <tr><td><h2>Symbol: @CompanySessionEnd.Symbol</h2></td><td><h2 class="header-space">Volume: @CompanySessionEnd.Volume</h2></td></tr>
+                        <tr><td><h2>Open: @CompanySessionEnd.Open</h2></td><td><h2 class="header-space">After hours: @CompanySessionEnd.AfterHours</h2></td></tr>
+                        <tr><td><h2>High: @CompanySessionEnd.High</h2></td><td><h2 class="header-space">Pre market: @CompanySessionEnd.PreMarket</h2></td></tr>
+                        <tr><td><h2>Low: @CompanySessionEnd.Low</h2></td></tr>
+                    </table>
+
+
+                    <h1 class="h3">Last 5 articles</h1>
+                    <table class="table">
+                        @foreach (var artcile in CompanyArticles)
+                        {
+                            <tr><td class="tda">@artcile.Title<br><a href="@artcile.Article_url">View article</a></td>
+                                <td class="tda">@artcile.Published_utc</td></tr>
+                        }
+                    </table>
+                }
+
+
             }
             
 
@@ -249,6 +253,7 @@
                 }
             }
             StockDetails = StockDetailsToday;
+
 
             SessionEndToday = await CompanyService.GetSessionEnd(StockDetailsToday[StockDetailsToday.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
             SessionEndWeek = await CompanyService.GetSessionEnd(StockDetailsWeek[StockDetailsWeek.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
@@ -382,9 +387,7 @@
     color: dodgerblue;
 }
 
-.e-ddl.e-input-group.e-control-wrapper.e-input-focus::before, .e-ddl.e-input-group.e-control-wrapper.e-input-focus::after{
-    border-block: 2px solid dodgerblue;
-}
+
 
  .name {
         right: 15px;
@@ -402,5 +405,7 @@
        background:none; 
        color: dodgerblue;
     } 
+
+
 
 </style>
