@@ -1,0 +1,406 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Projekt_2.Client.Models
+@using Projekt_2.Client.Services
+@attribute [Authorize]
+@using Projekt_2.Shared.DTOs
+@using Projekt_2.Shared.Models
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.DropDowns
+@inject NavigationManager Navigation
+@inject SignOutSessionStateManager SignOutManager
+@inject NavigationManager navigator
+@inject Ticker ticker
+@inject ICompanyService CompanyService
+@inject IUserService UserService
+
+<AuthorizeView>
+    <Authorized>
+<div class="container">
+<div class="div1">
+<h1 class="h1">Dashboard</h1>
+
+<button class="button" @onclick="BeginSignOut">LOGOUT</button>
+</div>
+<div class="form-group div4">
+    <label>Company symbol</label>
+<div class="div2">
+    <div class="div5">
+<SfAutoComplete TValue="string" TItem="CompanyMainInfo" Placeholder="Select a Company" DataSource="@Companies" Width="800px" @bind-Value="@Company" FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains" SuggestionCount=3 PopupWidth="920" Highlight="true" CssClass="e-custom">
+    <AutoCompleteTemplates TItem="CompanyMainInfo">
+        <ItemTemplate Context="another_name">
+            <span><span class='ticker'>@((another_name as CompanyMainInfo).Ticker)</span><span class='name'>@((another_name as CompanyMainInfo).Name)</span></span>
+        </ItemTemplate>
+    </AutoCompleteTemplates>
+    <AutoCompleteFieldSettings Value="Ticker"></AutoCompleteFieldSettings>
+</SfAutoComplete>
+</div>
+<button class="searchbutton" @onclick="ShowInfo">SEARCH</button>
+<button class="watchbutton" @onclick="GoToWatchlist">WATCHLIST</button>
+</div>
+</div>
+@if (CompanyInfo == null)
+            { 
+                if(ticker.CompanyTicker==null){
+                    <div class="div3">
+                        <h1 class="h2">CHOOSE COMPANY</h1>
+                    </div>
+                }
+                else
+                {
+                    <div class="gifdiv"><img class="gif" src="https://icon-library.com/images/waiting-icon-gif/waiting-icon-gif-7.jpg"></div>
+                }
+
+            }
+            else
+            {
+                
+   <div class="container2">
+<img class="logo" src="@CompanyInfo.IconUrl">
+
+<div class="div7">
+<div>
+<h1 class="firma">@CompanyInfo.Name (@CompanyInfo.Ticker)</h1>
+</div>
+<div>
+    <table>
+<tr><td><h2>City: @CompanyInfo.City</h2></td>
+<td class="tdi"><h2>Phone Number: @CompanyInfo.PhoneNumber</h2></td>
+</tr>
+<tr><td>
+    <h2 ><a href="@CompanyInfo.HomepageUrl">Visit company website</a></h2></td>
+<td class="tdi"><h2>Description: @CompanyInfo.Description </h2></td>
+</tr>
+</table>
+</div>
+</div>
+
+
+<div>
+</div>
+<img class="plus" src="https://icon-library.com/images/add_blue.png" @onclick="@AddToWatchlist">
+</div>
+<div class="datebutcontainer">
+<button class="datesbuttons" @onclick="@(() => UpdateStocks("today"))">current day</button>
+<button class="datesbuttons" @onclick="@(() => UpdateStocks("week"))">1 week ago</button>
+<button class="datesbuttons" @onclick="@(() => UpdateStocks("month"))">1 month ago</button>
+<button class="datesbuttons" @onclick="@(() => UpdateStocks("threemonths"))">3 month ago</button>
+</div>
+<div class="control-section" align='center'>
+                    <SfChart Width="90%">
+                        <ChartArea>
+                            <ChartAreaBorder Width="0"></ChartAreaBorder>
+                        </ChartArea>
+                        <ChartPrimaryXAxis LabelFormat="dd.MMM" ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime" Interval="10">
+                            <ChartAxisCrosshairTooltip Enable="true"></ChartAxisCrosshairTooltip>
+                            <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+                        </ChartPrimaryXAxis>
+                        <ChartPrimaryYAxis RangePadding="ChartRangePadding.None" Interval="10" LabelFormat="n0">
+                            <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+                            <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+                        </ChartPrimaryYAxis>
+                        <ChartLegendSettings Visible="false"></ChartLegendSettings>
+                        <ChartTooltipSettings Enable="true" Shared="true"></ChartTooltipSettings>
+                        <ChartCrosshairSettings Enable="true" LineType="LineType.Vertical">
+                        </ChartCrosshairSettings>
+                        <ChartSeriesCollection>
+                            <ChartSeries DataSource="@StockDetails" Name="@Company" XName="Date" High="High" Low="Low" Open="Open" Close="Close"
+                         BearFillColor="#00BFFF" BullFillColor="#00BFFF" Type="ChartSeriesType.HiloOpenClose">
+                            </ChartSeries>
+                        </ChartSeriesCollection>
+                    </SfChart>
+                   </div>
+                   
+                     
+<table>
+<tr><td><h2>From: @CompanySessionEnd.From</h2></td><td><h2 class="header-space">Close: @CompanySessionEnd.Close</h2></td></tr>
+<tr><td><h2>Symbol: @CompanySessionEnd.Symbol</h2></td><td><h2 class="header-space">Volume: @CompanySessionEnd.Volume</h2></td></tr>
+<tr><td><h2>Open: @CompanySessionEnd.Open</h2></td><td><h2 class="header-space">After hours: @CompanySessionEnd.AfterHours</h2></td></tr>
+<tr><td><h2>High: @CompanySessionEnd.High</h2></td><td><h2 class="header-space">Pre market: @CompanySessionEnd.PreMarket</h2></td></tr>
+<tr><td><h2>Low: @CompanySessionEnd.Low</h2></td></tr>
+ </table>
+
+<h1 class="h3">Last 5 articles</h1>
+<table class="table">
+   @foreach(var artcile in CompanyArticles){
+       <tr><td class="tda">@artcile.Title<br><a href="@artcile.Article_url">View article</a></td>
+       <td class="tda">@artcile.Published_utc</td></tr>    
+}
+</table>
+
+
+            
+            }
+            
+
+            </div>
+
+        
+
+
+</Authorized>
+<NotAuthorized><p>You need to login to see this page</p></NotAuthorized>
+</AuthorizeView>
+
+@code {
+    public List<CompanyMainInfo> Companies { get; set; } 
+    public string Company { get; set; }
+    public CompanyFullInfo CompanyInfo { get; set; }
+    public List<CompanyArticle> CompanyArticles { get; set; } 
+    public List<CompanyStockForOHCLChart> StockDetails { get; set; } 
+    public SessionEnd CompanySessionEnd { get; set; } 
+
+
+    public List<CompanyStockForOHCLChart> StockDetailsToday { get; set; }
+    public List<CompanyStockForOHCLChart> StockDetailsWeek { get; set; }
+    public List<CompanyStockForOHCLChart> StockDetailsMonth { get; set; }
+    public List<CompanyStockForOHCLChart> StockDetailsThreeMonths { get; set; }
+
+
+    public SessionEnd SessionEndToday { get; set; }
+    public SessionEnd SessionEndWeek { get; set; }
+    public SessionEnd SessionEndMonth { get; set; }
+    public SessionEnd SessionEndThreeMonths { get; set; }
+
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+
+            Companies = await CompanyService.GetAllCompaniesMainInfo();
+            if (ticker.CompanyTicker != null)
+            {
+                Company = ticker.CompanyTicker;
+                ShowInfo();
+            }
+        }
+        catch(AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+
+
+    }
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        await SignOutManager.SetSignOutState();
+        Navigation.NavigateTo("authentication/logout");
+    }
+
+    private async void ShowInfo()
+    {
+        if (Company != null)
+        {
+            ticker.CompanyTicker = Company;
+
+            CompanyInfo = await CompanyService.GetCompanyFullInfo(Company);
+            CompanyArticles = await CompanyService.GetCompanyArticles(Company);
+            StockDetailsThreeMonths = await UploadStocksData();
+            StockDetailsThreeMonths = StockDetailsThreeMonths.OrderByDescending(e => e.Date).ToList();
+
+
+            var todayDate = DateTime.Now;
+            var todayDateString = todayDate.ToString("yyyy-MM-dd");
+            todayDate = DateTime.Parse(todayDateString);
+
+
+            StockDetailsToday = new List<CompanyStockForOHCLChart>();
+            if (StockDetailsThreeMonths[0].Date.Date != todayDate.Date)
+            {
+
+                StockDetailsToday.Add(new CompanyStockForOHCLChart
+                    {
+                        Date = DateTime.Now,
+                        High = 0,
+                        Low = 0,
+                        Open = 0,
+                        Close = 0
+                    }
+
+                );
+            }
+            else
+            {
+                StockDetailsToday.Add(StockDetailsThreeMonths[0]);
+
+            }
+
+            var weekAgoDate = todayDate.AddDays(-6);
+            var monthAgoDate = todayDate.AddMonths(-1);
+
+            StockDetailsWeek = new List<CompanyStockForOHCLChart>();
+            StockDetailsMonth = new List<CompanyStockForOHCLChart>();
+            foreach (var day in StockDetailsThreeMonths)
+            {
+                if (day.Date.Date >= weekAgoDate.Date)
+                {
+                    StockDetailsWeek.Add(day);
+                }
+                if (day.Date.Date >= monthAgoDate.Date)
+                {
+                    StockDetailsMonth.Add(day);
+                }
+            }
+            StockDetails = StockDetailsToday;
+
+            SessionEndToday = await CompanyService.GetSessionEnd(StockDetailsToday[StockDetailsToday.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
+            SessionEndWeek = await CompanyService.GetSessionEnd(StockDetailsWeek[StockDetailsWeek.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
+            SessionEndMonth = await CompanyService.GetSessionEnd(StockDetailsMonth[StockDetailsMonth.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
+            SessionEndThreeMonths = await CompanyService.GetSessionEnd(StockDetailsThreeMonths[StockDetailsThreeMonths.Count - 1].Date.ToString("yyyy-MM-dd"),Company);
+
+            CompanySessionEnd = SessionEndToday;
+            List<CompanyStock> companyStockPost = new List<CompanyStock>();
+            foreach (var stock in StockDetailsThreeMonths)
+            {
+                companyStockPost.Add(new CompanyStock
+                    {
+                        DateString = stock.Date.ToString("yyyy-MM-dd"),
+                        High = stock.High,
+                        Low = stock.Low,
+                        Open = stock.Open,
+                        Close = stock.Close
+                    });
+            }
+
+            List<SessionEnd> sessionsEndsPost = new List<SessionEnd>();
+            sessionsEndsPost.Add(SessionEndToday);
+            sessionsEndsPost.Add(SessionEndWeek);
+            sessionsEndsPost.Add(SessionEndMonth);
+            sessionsEndsPost.Add(SessionEndThreeMonths);
+            CompanyFullInfoPost companyInfoPost = new CompanyFullInfoPost
+                {
+                    Name = CompanyInfo.Name,
+                    Ticker = CompanyInfo.Ticker,
+                    HomepageUrl = CompanyInfo.HomepageUrl,
+                    Description = CompanyInfo.Description,
+                    PhoneNumber = CompanyInfo.PhoneNumber,
+                    City = CompanyInfo.City,
+                    IconUrl = CompanyInfo.IconUrl,
+                    LastUpdateDate = DateTime.Now
+                };
+
+            CompanyPost companyPost = new CompanyPost
+                {
+                    CompanyArticles = CompanyArticles,
+                    CompanyInfo = companyInfoPost,
+                    CompanyStocks = companyStockPost,
+                    SessionsEnds = sessionsEndsPost
+                };
+
+
+            await CompanyService.AddCompanyToDatabase(companyPost);
+            await InvokeAsync(() => { StateHasChanged(); });
+        }
+    }
+
+
+
+
+
+
+
+    private async void UpdateStocks(string date)
+    {
+        if (date.Equals("today"))
+        {
+            StockDetails = StockDetailsToday;
+            CompanySessionEnd = SessionEndToday;
+        }
+        if (date.Equals("week"))
+        {
+            StockDetails = StockDetailsWeek;
+            CompanySessionEnd = SessionEndWeek;
+        }
+        if (date.Equals("month"))
+        {
+            StockDetails = StockDetailsMonth;
+            CompanySessionEnd = SessionEndMonth;
+        }
+        if (date.Equals("threemonths"))
+        {
+            StockDetails = StockDetailsThreeMonths;
+            CompanySessionEnd = SessionEndThreeMonths;
+        }
+        await InvokeAsync(() =>{StateHasChanged();});
+
+    }
+
+    private async Task<List<CompanyStockForOHCLChart>> UploadStocksData()
+    {
+        List<CompanyStock> companyStocks = await CompanyService.GetCompanyStocks(Company);
+        List<CompanyStockForOHCLChart> stocks =  new List<CompanyStockForOHCLChart>();
+
+        foreach(var day in companyStocks)
+        {
+            stocks.Add(new CompanyStockForOHCLChart
+            {
+                Date = DateTime.Parse(day.DateString),
+                High = day.High,
+                Low = day.Low,
+                Close = day.Close,
+                Open = day.Open
+            });
+        }
+        return stocks;
+
+
+    }
+
+
+    private async void AddToWatchlist()
+    {
+        CompanyTickerPost ticker = new CompanyTickerPost();
+        ticker.Ticker = Company;
+        await UserService.AddCompanyToUserWatchlist(ticker);
+        navigator.NavigateTo("/watchlist");
+    }
+
+    private void GoToWatchlist()
+    {
+        navigator.NavigateTo("/watchlist");
+    }
+
+
+
+
+}
+
+<style>
+.e-ddl.e-input-group.e-control-wrapper .e-input{
+    font-size: 35px;
+    font-family: emoji;
+    color: dodgerblue;
+}
+.e-ddl.e-input-group input.e-input::placeholder {
+    color: dodgerblue;
+}
+
+.e-ddl.e-input-group.e-control-wrapper.e-input-focus::before, .e-ddl.e-input-group.e-control-wrapper.e-input-focus::after{
+    border-block: 2px solid dodgerblue;
+}
+
+ .name {
+        right: 15px;
+        position: absolute;
+    }
+        .e-dropdownbase .e-list-item, .e-dropdownbase .e-list-item.e-item-focus {
+    font-weight: bold;
+    
+}
+.e-dropdownbase .e-list-item.e-item-focus, .e-dropdownbase .e-list-item.e-active, .e-dropdownbase .e-list-item.e-active.e-hover, .e-dropdownbase .e-list-item.e-hover {
+    background-color: #F0F8FF;
+}
+    .e-custom.e-input-group:not(.e-float-icon-left):not(.e-float-input)::before, 
+    .e-custom.e-input-group:not(.e-float-icon-left):not(.e-float-input)::after{ 
+       background:none; 
+       color: dodgerblue;
+    } 
+
+</style>

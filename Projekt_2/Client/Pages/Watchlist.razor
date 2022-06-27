@@ -1,0 +1,237 @@
+﻿@page "/watchlist"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Projekt_2.Client.Services
+@using Projekt_2.Shared.Models
+@inject NavigationManager navigator
+@attribute [Authorize]
+@inject Ticker ticker
+@inject IUserService UserService
+
+<AuthorizeView>
+    <Authorized>
+<div class="container">
+    <h2>Watchlist</h2>
+    @if (CurrentPage != null)
+    {
+        <div class="tablecontainer">
+            <table>
+                <tr>
+                    <th @onclick="@(() => Sort("Ticker"))">LOGO</th>
+                    <th @onclick="@(() => Sort("Ticker"))">SYMBOL</th>
+                    <th @onclick="@(() => Sort("Name"))">NAME</th>
+                    <th @onclick="@(() => Sort("Description"))">DESCRIPTION</th>
+                    <th @onclick="@(() => Sort("City"))">CITY</th>
+                    <th @onclick="@(() => Sort("PhoneNumber"))">PHONE NUMBER</th>
+                    <th>OPTIONS</th>
+                </tr>
+                @foreach (var company in CurrentPage)
+                {
+                    <tr>
+                        <td><img src="@company.IconUrl" class="icon" @onclick="@(() => ShowCompanyData(@company.Ticker))"></td>
+                        <td>@company.Ticker</td>
+                        @if (@company.Name.Length > 20)
+                        {
+                            <td class="longname">@company.Name</td>
+                        }else{
+                        <td>@company.Name</td>
+                        }
+                        @if (@company.Description.Length > 20)
+                        {
+                            <td class="longname">@company.Description</td>
+                        }
+                        else
+                        {
+                           <td>@company.Description</td> 
+                        }
+                        <td>@company.City</td>
+                        <td>@company.PhoneNumber</td>
+                        <td>
+                            <button class="deletebut" @onclick="@(() => DeleteCompany(@company.Ticker))">Delete</button>
+
+                        </td>
+                    </tr>
+                }
+
+            </table>
+        </div>
+        <div>
+            <button class="backbut" @onclick="@GoBack">BACK</button>
+            <button class="pagebut" @onclick="@ShowThirdPage">3</button>
+            <button class="pagebut" @onclick="@ShowSecondPage">2</button>
+            <button class="pagebut" @onclick="@ShowFirstPage">1</button>
+        </div>
+    }
+</div>
+</Authorized>
+<NotAuthorized>
+    <p>You need to login to see this page</p>
+</NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    public List<CompanyFullInfo> UserCompanies { get; set; }
+    public List<CompanyFullInfo> FirstPage { get; set; }
+    public List<CompanyFullInfo> SecondPage { get; set; }
+    public List<CompanyFullInfo> ThirdPage { get; set; }
+    public List<CompanyFullInfo> CurrentPage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            UserCompanies = await UserService.GetUserCompanies();
+
+            FirstPage = new List<CompanyFullInfo>();
+            SecondPage = new List<CompanyFullInfo>();
+            ThirdPage = new List<CompanyFullInfo>();
+            UpdateLists();
+            CurrentPage = FirstPage;
+            await InvokeAsync(() => { StateHasChanged(); });
+        }catch(AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private void ShowSecondPage()
+    {
+        CurrentPage = SecondPage;
+    }
+    private void ShowThirdPage()
+    {
+        CurrentPage = ThirdPage;
+    }
+    private void ShowFirstPage()
+    {
+        CurrentPage = FirstPage;
+    }
+
+    private void GoBack()
+    {
+        navigator.NavigateTo("/");
+    }
+
+    private async void DeleteCompany(string ticker)
+    {
+
+        var result = await UserService.DeleteCompanyFromUserWatchlist(ticker);
+        if (result)
+        {
+            var option = GetCurrentList();
+            CurrentPage = new List<CompanyFullInfo>();
+            for(int i = 0; i < UserCompanies.Count; i++)
+            {
+                if (UserCompanies[i].Ticker == ticker)
+                {
+                    UserCompanies.RemoveAt(i);
+                }
+            }
+            UpdateLists();
+
+            if (option == 1)
+            {
+                CurrentPage = FirstPage;
+            }
+            if (option == 2)
+            {
+                CurrentPage = SecondPage;
+            }
+            if (option == 3)
+            {
+                CurrentPage = ThirdPage;
+            }
+            await InvokeAsync(() => { StateHasChanged(); });
+        }
+    }
+
+    private void UpdateLists()
+    {
+        FirstPage = new List<CompanyFullInfo>();
+        SecondPage = new List<CompanyFullInfo>();
+        ThirdPage = new List<CompanyFullInfo>();
+        for (int i = 0; i < UserCompanies.Count; i++)
+        {
+            if (i < 5)
+            {
+                FirstPage.Add(UserCompanies[i]);
+            }
+            if (i >= 5 && i < 10)
+            {
+                SecondPage.Add(UserCompanies[i]);
+            }
+            if (i >= 10 && i < 15)
+            {
+                ThirdPage.Add(UserCompanies[i]);
+            }
+
+        }
+
+    }
+    private int GetCurrentList()
+    {
+        if(Enumerable.SequenceEqual(CurrentPage, FirstPage))
+        {
+            return 1;
+        }
+        if(Enumerable.SequenceEqual(CurrentPage, SecondPage))
+        {
+            return 2;
+        }
+        return 3;
+    }
+
+    public KeyValuePair<string, bool> ColumnSort { get; set; } = new KeyValuePair<string, bool>("", false);
+
+    private void Sort(string columnName)
+    {
+        if(ColumnSort.Key != columnName)
+        {
+            ColumnSort = new KeyValuePair<string, bool>(columnName, false);
+        } else
+        {
+            ColumnSort = new KeyValuePair<string, bool>(columnName, !ColumnSort.Value);
+        }
+
+        if (ColumnSort.Value)
+        {
+            SortListAsc(columnName);
+        }else
+        {
+            SortListDesc(columnName);
+        }
+        var option = GetCurrentList();
+        UpdateLists();
+        if (option == 1)
+        {
+            CurrentPage = FirstPage;
+        }
+        if (option == 2)
+        {
+            CurrentPage = SecondPage;
+        }
+        if (option == 3)
+        {
+            CurrentPage = ThirdPage;
+        }
+
+    }
+
+    private void SortListDesc(string columnName)
+    {
+        UserCompanies = UserCompanies.OrderByDescending(e => e.GetType().GetProperty(columnName).GetValue(e, null)).ToList();
+    }
+
+    private void SortListAsc(string columnName)
+    {
+        UserCompanies = UserCompanies.OrderBy(e => e.GetType().GetProperty(columnName).GetValue(e, null)).ToList();
+    }
+
+    private void ShowCompanyData(string tickerTable)
+    {
+        ticker.CompanyTicker = tickerTable;
+        navigator.NavigateTo("/");
+    }
+}

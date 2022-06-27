@@ -1,0 +1,94 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+
+
+<div class="container">
+    <h1>Registration</h1>
+        <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Input.UserName" class="labels"></label>
+                <input asp-for="Input.UserName" class="form-control inputs" placeholder="Enter login"/>
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.Password" class="labels"></label>
+                <input asp-for="Input.Password" class="form-control inputs" placeholder="Enter password"/>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.ConfirmPassword" class="labels"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control inputs" placeholder="Repeat password"/>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.Email" class="labels"></label>
+                <input asp-for="Input.Email" class="form-control inputs" placeholder="Enter email"/>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div>
+            <button type="submit" class="right-button">REGISTER</button> 
+            <button type="button" class="left-button" onclick="window.location.href='/authentication/login';">BACK</button>
+            </div>
+             
+        </form>
+    </div>
+
+    <style>
+    h1 {
+    color: dodgerblue;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+.left-button, .right-button {
+    color: white;
+    width: 150px;
+    height: 40px;
+    border: none;
+    background-color: dodgerblue;
+}
+
+.left-button {
+    float: left;
+}
+
+.right-button {
+    float: right;
+}
+
+.container {
+    display: flex;
+    height: 600px;
+    width: 400px;
+    flex-direction: column;
+    row-gap: 20px;
+    margin-top: 50px;
+}
+
+.labels {
+    color: dodgerblue;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.inputs {
+    background-color: #F0F8FF;
+    border: 1px solid #00BFFF;
+    color: dodgerblue;
+}
+
+    .inputs::placeholder {
+        color: dodgerblue;
+    }
+
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

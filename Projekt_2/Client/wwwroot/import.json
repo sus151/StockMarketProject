@@ -1,0 +1,12 @@
+{
+    "name": "syncfusion-blazor",
+    "version": "20.1.61",
+    "components": [
+        "SfStockChart",
+        "SfAutoComplete"
+    ],
+    "minified": false,
+    "themes": [
+        "material"
+    ]
+}
